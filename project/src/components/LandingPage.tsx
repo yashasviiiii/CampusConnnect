@@ -68,7 +68,7 @@ const LandingPage: React.FC = () => {
     {
       icon: MessageSquare,
       title: "Smart Discussion Forum",
-      description: "Doubt resolution with peer collaboration and expert guidance.",
+      description: "Doubt resolution with peer collaboration.",
       color: "from-primary-400 to-primary-600",
       bgColor: "bg-gradient-to-br from-primary-50 to-primary-100"
     },
@@ -99,7 +99,7 @@ const LandingPage: React.FC = () => {
     { number: "400+", label: "Active Students", color: "text-primary-600" },
     { number: "100+", label: "Daily Discussions", color: "text-secondary-600" },
     { number: "100+", label: "Items Traded", color: "text-accent-600" },
-    { number: "50+", label: "Campus Events", color: "text-warm-600" }
+    { number: "100+", label: "Campus Events", color: "text-warm-600" }
   ];
 
   return (
@@ -329,8 +329,16 @@ const LandingPage: React.FC = () => {
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+                <li>
+              <a href="/Privacy_policy" className="hover:text-white transition-colors">
+               Privacy Policy
+              </a>
+              </li>
+              <li>
+              <a href="/terms-of-service" className="hover:text-white transition-colors">
+               Terms of Service
+              </a>
+              </li>
               </ul>
             </div>
             
@@ -493,11 +501,11 @@ const LandingPage: React.FC = () => {
                   >
                     <option value="">Select course</option>
                     <option value="Computer Science">Computer Science</option>
-                    <option value="Engineering">Engineering</option>
-                    <option value="Business Administration">Business Administration</option>
-                    <option value="Arts">Arts</option>
-                    <option value="Science">Science</option>
-                    <option value="Commerce">Commerce</option>
+                    <option value="Artificial Intelligence">Artificial Intelligence</option>
+                    <option value="Mathematics and Computation">Mathematics and Computation</option>
+                    <option value="Mechanical Engineering">Mechanical Engineering</option>
+                    <option value="Chemical Engineering">Chemical Engineering</option>
+                    <option value="Civil Engineering">Civil Engineering</option>
                   </select>
                 </div>
                 <div>
