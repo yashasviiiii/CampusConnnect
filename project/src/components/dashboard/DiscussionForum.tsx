@@ -234,6 +234,7 @@ const DiscussionForum: React.FC = () => {
 
   const [discussions, setDiscussions] = useState<any[]>([]);
   const [userLikes, setUserLikes] = useState<{ [id: string]: boolean }>({});
+  const [likesMap, setLikesMap] = useState<{ [id: string]: number }>({});
   const [commentsMap, setCommentsMap] = useState<{ [id: string]: any[] }>({});
   const [commentInputs, setCommentInputs] = useState<{ [id: string]: string }>({});
   const [showNewPostModal, setShowNewPostModal] = useState(false);
@@ -243,52 +244,69 @@ const DiscussionForum: React.FC = () => {
   const [newTags, setNewTags] = useState('');
 
   const fetchAll = async () => {
-    const { data: ddata, error: derr } = await supabase
+    // 1. Fetch discussions
+    const { data: discussionData, error: discussionError } = await supabase
       .from('discussions')
       .select(`
-        id, title, content, category, tags,
-        likes_count, replies_count, is_answered, created_at,
+        id, title, content, category, tags, is_answered, created_at,
         profiles (
           name
         )
       `)
       .order('created_at', { ascending: false });
 
-    if (derr) {
-      console.error('Error fetching discussions:', derr);
-    } else {
-      setDiscussions(ddata || []);
+    if (discussionError) {
+      console.error('Error fetching discussions:', discussionError);
+      return;
     }
 
+    setDiscussions(discussionData || []);
+
+    // 2. Fetch likes count
+    const { data: allLikes, error: likesError } = await supabase
+      .from('likes')
+      .select('discussion_id');
+
+    const likesMap = allLikes?.reduce((acc, cur) => {
+      acc[cur.discussion_id] = (acc[cur.discussion_id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    setLikesMap(likesMap);
+
+    // 3. Fetch which discussions this user liked
     if (user?.id) {
-      const { data: ldata } = await supabase
+      const { data: userLikesData } = await supabase
         .from('likes')
         .select('discussion_id')
         .eq('user_id', user.id);
 
-      const likesState = ldata?.reduce((acc, cur) => {
+      const likesState = userLikesData?.reduce((acc, cur) => {
         acc[cur.discussion_id] = true;
         return acc;
-      }, {} as any) || {};
+      }, {} as Record<string, boolean>) || {};
+
       setUserLikes(likesState);
-
-      const { data: cdata } = await supabase
-        .from('comments')
-        .select(`
-          id, content, discussion_id, created_at,
-          profiles (
-            name
-          )
-        `)
-        .order('created_at', { ascending: true });
-
-      const cmap = cdata?.reduce((acc, cur) => {
-        acc[cur.discussion_id] ||= [];
-        acc[cur.discussion_id].push(cur);
-        return acc;
-      }, {} as any) || {};
-      setCommentsMap(cmap);
     }
+
+    // 4. Fetch comments
+    const { data: commentData } = await supabase
+      .from('comments')
+      .select(`
+        id, content, discussion_id, created_at,
+        profiles (
+          name
+        )
+      `)
+      .order('created_at', { ascending: true });
+
+    const commentMap = commentData?.reduce((acc, cur) => {
+      acc[cur.discussion_id] ||= [];
+      acc[cur.discussion_id].push(cur);
+      return acc;
+    }, {} as Record<string, any[]>) || {};
+
+    setCommentsMap(commentMap);
   };
 
   useEffect(() => {
@@ -321,30 +339,54 @@ const DiscussionForum: React.FC = () => {
   };
 
   const handleLike = async (id: string, hasLiked: boolean) => {
-    if (!user?.id) return alert('Please login first!');
+  if (!user?.id) return alert('Please login first!');
 
-    if (hasLiked) {
-      await supabase
-        .from('likes')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('discussion_id', id);
+  if (hasLiked) {
+    const { error } = await supabase
+      .from('likes')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('discussion_id', id);
 
-      setDiscussions(d =>
-        d.map(x => (x.id === id ? { ...x, likes_count: x.likes_count - 1 } : x))
-      );
-    } else {
-      await supabase.from('likes').insert([
-        { user_id: user.id, discussion_id: id }
-      ]);
-
-      setDiscussions(d =>
-        d.map(x => (x.id === id ? { ...x, likes_count: x.likes_count + 1 } : x))
-      );
+    if (error) {
+      alert("Failed to unlike: " + error.message);
+      return;
     }
+  } else {
+    const { error } = await supabase
+      .from('likes')
+      .insert([{ user_id: user.id, discussion_id: id }]);
 
-    setUserLikes(s => ({ ...s, [id]: !hasLiked }));
-  };
+    if (error) {
+      alert("Failed to like: " + error.message);
+      return;
+    }
+  }
+
+  // Re-fetch just likes and userLikes
+  const { data: allLikes } = await supabase
+    .from('likes')
+    .select('discussion_id');
+
+  const likesMap = allLikes?.reduce((acc, cur) => {
+    acc[cur.discussion_id] = (acc[cur.discussion_id] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>) || {};
+
+  setLikesMap(likesMap);
+
+  const { data: userLikesData } = await supabase
+    .from('likes')
+    .select('discussion_id')
+    .eq('user_id', user.id);
+
+  const userLikesState = userLikesData?.reduce((acc, cur) => {
+    acc[cur.discussion_id] = true;
+    return acc;
+  }, {} as Record<string, boolean>) || {};
+
+  setUserLikes(userLikesState);
+};
 
   const handleComment = async (id: string) => {
     const text = commentInputs[id];
@@ -438,7 +480,7 @@ const DiscussionForum: React.FC = () => {
               }`}
             >
               <ThumbsUp size={18} />
-              {d.likes_count || 0}
+              {likesMap[d.id] || 0}
             </button>
             <div className="flex items-center gap-1 text-gray-600">
               <MessageSquare size={18} />
@@ -479,6 +521,3 @@ const DiscussionForum: React.FC = () => {
 };
 
 export default DiscussionForum;
-
-
-

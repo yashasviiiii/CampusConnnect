@@ -332,8 +332,6 @@ const LandingPage: React.FC = () => {
              Help Center
         </a>
         </li>
-
-          <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
           <li>
             <a href="/Privacy_policy" className="hover:text-white transition-colors">Privacy Policy</a>
           </li>
