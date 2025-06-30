@@ -19,6 +19,7 @@ import DiscussionForum from './dashboard/DiscussionForum';
 import Marketplace from './dashboard/Marketplace';
 import Events from './dashboard/Events';
 import Messages from './dashboard/Messages';
+import SettingsPage from './dashboard/Settings'; // ✅ Import Settings page
 
 const Dashboard: React.FC = () => {
   const { user, profile, logout } = useAuth();
@@ -83,10 +84,22 @@ const Dashboard: React.FC = () => {
           
           <div className="mt-12 pt-8 border-t border-gray-200">
             <div className="space-y-3">
-              <button className="w-full flex items-center px-6 py-4 text-sm font-semibold text-gray-600 rounded-2xl hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900 transition-all duration-300">
+              {/* ✅ Updated Settings button */}
+              <button 
+                onClick={() => {
+                  navigate('/dashboard/settings');
+                  setIsSidebarOpen(false);
+                }}
+                className={`w-full flex items-center px-6 py-4 text-sm font-semibold rounded-2xl transition-all duration-300 transform hover:scale-105 ${
+                  isActive('/dashboard/settings')
+                    ? 'bg-gradient-to-r from-gray-400 to-gray-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 hover:text-gray-900'
+                }`}
+              >
                 <Settings className="mr-4 h-6 w-6" />
                 Settings
               </button>
+
               <button 
                 onClick={handleLogout}
                 className="w-full flex items-center px-6 py-4 text-sm font-semibold text-gray-600 rounded-2xl hover:bg-gradient-to-r hover:from-coral-50 hover:to-coral-100 hover:text-coral-700 transition-all duration-300"
@@ -157,6 +170,7 @@ const Dashboard: React.FC = () => {
             <Route path="/marketplace" element={<Marketplace />} />
             <Route path="/events" element={<Events />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/settings" element={<SettingsPage />} /> {/* ✅ Route added */}
           </Routes>
         </main>
       </div>
